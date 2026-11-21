@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>Papi's Hot Chicken — Digital Menu Board</title>
+<style>
+:root { --accent:#f53225; --bright:#ff9f35; --cream:#fff5e3; --ink:#090606; --line:rgba(255,106,65,.34); }
+*{box-sizing:border-box} html,body{margin:0;width:100%;height:100%;background:#080607;color:var(--cream);font-family:Arial,Helvetica,sans-serif;overflow:hidden}
+button,input,textarea,select{font:inherit} button{cursor:pointer} button:disabled{opacity:.35;cursor:not-allowed}
+#app{position:fixed;inset:0;display:flex;background:#050303} #display{position:relative;flex:1;overflow:hidden;background:#090607;min-width:0}
+#stage{position:absolute;top:50%;left:50%;width:1920px;height:1080px;transform:translate(-50%,-50%) scale(1);transform-origin:center center;overflow:hidden;isolation:isolate;background:
+ radial-gradient(ellipse 750px 390px at 50% 11%,rgba(163,18,9,.25),transparent 75%),
+ radial-gradient(ellipse 850px 650px at 0% 75%,rgba(104,6,3,.22),transparent 72%),
+ radial-gradient(ellipse 800px 580px at 100% 80%,rgba(124,14,7,.24),transparent 72%),
+ repeating-linear-gradient(124deg,#100a09 0px,#100a09 5px,#0d0908 6px,#0e0908 12px);}
+#stage:before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.43;background-image:radial-gradient(#ff783c 0.6px,transparent .9px);background-size:25px 24px;mask-image:linear-gradient(to bottom,black,transparent 62%);z-index:0}
+#stage:after{content:"";position:absolute;inset:-200px;pointer-events:none;background:radial-gradient(ellipse at 52% -25%,rgba(255,60,32,.18),transparent 53%);animation:breath 11s ease-in-out infinite alternate;z-index:0}
+.fire-glow{position:absolute;left:-12%;right:-12%;top:90px;height:115px;transform:rotate(-2deg);background:linear-gradient(90deg,transparent,rgba(239,37,22,.18) 25%,rgba(255,105,44,.23) 50%,rgba(239,37,22,.18) 75%,transparent);filter:blur(37px);animation:breath 6s ease-in-out infinite alternate;pointer-events:none}
+.top-edge{position:absolute;left:0;top:0;width:100%;height:8px;background:linear-gradient(90deg,transparent 0%,#b51613 22%,#fa4e30 50%,#b51613 78%,transparent 100%);box-shadow:0 2px 26px rgba(248,42,21,.5)}
+.board-header{height:184px;display:flex;align-items:center;justify-content:center;position:relative;z-index:2;padding:11px 64px 0}
+.brand-block{position:relative;display:flex;align-items:center;justify-content:center;gap:27px;filter:drop-shadow(0 11px 7px rgba(0,0,0,.6))}
+.mascot{width:148px;height:146px;flex-shrink:0;transform:rotate(-7deg);filter:drop-shadow(0 0 15px rgba(253,52,22,.25))}
+.brand-words{display:flex;flex-direction:column;align-items:flex-start;margin-top:-6px;line-height:.88}
+.main-brand{font-family:Impact,'Arial Black',sans-serif;letter-spacing:-2px;font-size:112px;font-weight:900;font-style:italic;text-transform:uppercase;white-space:nowrap;color:#fff2dc;text-shadow:4px 5px 0 #34100e,0 0 37px #ed3d231c;transform:skewX(-6deg)}
+.sub-brand{margin-top:12px;display:flex;align-items:center;gap:16px;align-self:flex-end;text-align:right}
+.sub-brand span{font-family:Impact,'Arial Narrow',sans-serif;font-style:italic;font-weight:900;letter-spacing:9px;font-size:47px;color:var(--accent);text-shadow:3px 3px 0 #230707}
+.sub-brand:before{content:"";display:block;width:115px;height:6px;background:linear-gradient(90deg,transparent,var(--accent));transform:skew(-15deg);box-shadow:0 0 20px rgba(248,45,23,.6)}
+.flame-icon{display:inline-block;color:#ffb148;font-size:40px;transform:rotate(-13deg);animation:flame 3s ease-in-out infinite}
+.header-line{position:absolute;bottom:3px;height:3px;left:32px;right:32px;background:linear-gradient(90deg,transparent,var(--accent) 30%,#ffbb58 50%,var(--accent) 70%,transparent);filter:drop-shadow(0 0 11px var(--accent))}
+.side-hatch{position:absolute;top:47px;width:260px;height:75px;opacity:.23;background:repeating-linear-gradient(120deg,transparent 0px,transparent 34px,var(--accent) 34px,var(--accent) 57px,transparent 57px,transparent 79px);mask-image:linear-gradient(90deg,transparent,black)}
+.side-hatch.left{left:15px;transform:skewX(-11deg) scaleX(-1)}.side-hatch.right{right:15px;transform:skewX(-11deg)}
+.menu-grid{position:absolute;top:202px;left:26px;right:26px;bottom:79px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:17px;z-index:3}
+.dish-card{--ix:0;position:relative;min-width:0;border:2px solid rgba(255,77,51,.66);border-radius:18px;background:radial-gradient(circle at 44% 74%,rgba(79,20,12,.48),transparent 66%),linear-gradient(156deg,#21100f,#130c0a 56%,#1a0b08);box-shadow:inset 0 0 0 3px rgba(0,0,0,.4),inset 0 0 28px rgba(185,33,13,.11),0 0 13px rgba(248,41,24,.11);overflow:hidden;transition:border-color .45s,box-shadow .45s;}
+.dish-card:before{content:"";position:absolute;inset:0;z-index:0;background:linear-gradient(112deg,transparent 20%,rgba(255,255,255,.05) 43%,transparent 65%);transform:translateX(-150%);animation:sheen 12s ease-in-out infinite;animation-delay:calc(var(--ix) * -.55s)}
+.dish-card.spotlit{border-color:rgba(255,166,71,.95);box-shadow:inset 0 0 0 2px rgba(0,0,0,.4),0 0 28px rgba(249,56,31,.42),0 0 7px rgba(255,211,139,.25)}
+.card-head{position:absolute;top:13px;left:18px;right:17px;z-index:5;display:flex;gap:12px;align-items:center;min-height:53px}
+.card-number{flex:0 0 auto;font-family:Impact,'Arial Black',sans-serif;color:var(--accent);font-style:italic;font-size:49px;text-shadow:2px 4px 1px #000;line-height:1}
+.card-title{font-family:Impact,'Arial Black',Arial,sans-serif;color:#fff4dd;font-size:39px;font-style:italic;letter-spacing:.3px;text-transform:uppercase;line-height:1.02;max-width:345px;text-shadow:2px 3px 0 #000;}
+.card-title.long{font-size:32px}.card-title.verylong{font-size:28px}
+.card-description{position:absolute;top:77px;left:20px;right:20px;color:#f0e0cb;font-size:22px;font-weight:600;line-height:1.22;letter-spacing:.1px;z-index:5;min-height:54px;text-shadow:0 2px 3px #000}
+.food-window{position:absolute;inset:126px 6px 2px 6px;z-index:1;display:flex;align-items:flex-end;justify-content:center;overflow:visible}
+.food-window:before{content:"";position:absolute;bottom:2px;left:10%;right:10%;height:87px;background:radial-gradient(ellipse,rgba(255,108,21,.29),transparent 67%);filter:blur(13px)}
+.food-image{position:relative;width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 18px 9px rgba(0,0,0,.72)) saturate(1.08) contrast(1.04);animation:floatfood 7.6s ease-in-out infinite;animation-delay:calc(var(--ix) * -.7s)}
+.food-window.no-photo .fallback{display:flex}.fallback{display:none;position:relative;align-items:center;justify-content:center;height:100%;width:100%;font-size:120px;opacity:.55}
+.price-sticker{position:absolute;right:16px;bottom:14px;min-width:146px;padding:11px 14px 9px;z-index:7;transform:rotate(-3deg);text-align:center;background:#f7cf83;color:#200a05;clip-path:polygon(2% 8%,14% 3%,29% 7%,45% 2%,66% 6%,85% 3%,99% 10%,96% 89%,85% 96%,62% 92%,42% 98%,25% 93%,4% 99%,0 82%);box-shadow:0 2px 18px rgba(0,0,0,.4)}
+.price-sticker span{font-family:Impact,'Arial Black',Arial,sans-serif;font-size:47px;letter-spacing:0px;line-height:1;color:#170b06;display:block;transform:skewX(-3deg)}
+.price-sticker small{display:block;font-size:14px;font-weight:900;letter-spacing:1px;text-transform:uppercase}
+.dish-tag{position:absolute;top:140px;right:10px;z-index:8;background:#ec2b1c;transform:rotate(4deg);color:white;padding:6px 12px;font-size:18px;font-weight:900;text-transform:uppercase;box-shadow:0 4px 8px #0008}
+.board-footer{position:absolute;bottom:0;left:0;right:0;height:67px;background:linear-gradient(180deg,rgba(12,6,5,.75),rgba(5,2,2,.96));border-top:2px solid #9b1f16;box-shadow:0 -3px 22px rgba(221,29,11,.17);display:flex;align-items:center;z-index:4;overflow:hidden}
+.footer-mark{height:100%;display:flex;align-items:center;gap:10px;padding:0 29px;border-right:1px solid #7b241e;flex-shrink:0;background:#200c09;color:#ffe4bb;font-family:Impact,Arial,sans-serif;font-size:25px;letter-spacing:1.8px}
+.footer-mark b{font-size:32px;color:var(--accent)}
+.ticker-mask{overflow:hidden;flex:1;position:relative;white-space:nowrap}
+.ticker-track{display:inline-flex;gap:130px;min-width:max-content;align-items:center;animation:marquee 35s linear infinite;padding-left:30px}
+.ticker-copy{font-weight:900;letter-spacing:4px;font-size:24px;color:#fff0dd}
+.ticker-copy:before{content:'✦';color:var(--accent);margin-right:80px}
+.footer-checks{width:125px;height:100%;flex-shrink:0;background:conic-gradient(#e12a19 25%,#0f0705 0 50%,#e12a19 0 75%,#0f0705 0) 0 0/34px 34px;transform:skewX(-11deg);opacity:.85}
+#quick-tools{position:fixed;top:15px;right:17px;display:flex;gap:8px;z-index:35;opacity:0;transition:opacity .2s} #display:hover #quick-tools,#quick-tools:focus-within{opacity:1}
+.qtool{background:#170d0add;border:1px solid #ff604b85;color:#fff1df;border-radius:8px;padding:10px 12px;font-weight:700;font-size:13px;box-shadow:0 8px 22px #0008}
+@keyframes floatfood{0%,100%{transform:translateY(7px) scale(.99)}50%{transform:translateY(-7px) scale(1.015)}}
+@keyframes breath{0%{opacity:.35}100%{opacity:.9}} @keyframes sheen{0%,78%{transform:translateX(-150%)}90%,100%{transform:translateX(150%)}}
+@keyframes flame{0%,100%{transform:rotate(-13deg) scale(1)}50%{transform:rotate(5deg) scale(1.11)}}
+@keyframes marquee{to{transform:translateX(-50%)}}
+#stage.low-motion .food-image{animation-duration:16s} #stage.low-motion .dish-card:before{animation-duration:23s} #stage.low-motion .ticker-track{animation-duration:65s}
+#stage.no-motion *,#stage.no-motion *:before,#stage.no-motion *:after{animation:none!important;transition:none!important}
+#stage.no-motion .ticker-track{transform:none}
+@media(prefers-reduced-motion:reduce){#stage:not(.force-motion) *,#stage:not(.force-motion) *:before,#stage:not(.force-motion) *:after{animation-duration:0.001s!important;transition:none!important}}
+/* EDITOR */
+#editor{display:none;width:510px;flex:0 0 510px;height:100vh;background:#161211;border-right:1px solid #63302a;box-shadow:15px 0 55px #0009;z-index:20;overflow:hidden;flex-direction:column}
+#app.editing #editor{display:flex}
+.editor-top{padding:22px 22px 15px;border-bottom:1px solid #3b2925;background:#211712}
+.editor-topbar{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.editor-top h1{margin:0;font-size:24px;line-height:1.2;font-weight:900;letter-spacing:-.5px}.editor-top h1 em{font-style:normal;color:#ff6c45}
+.editor-top small{display:block;margin-top:7px;color:#b9a49b;line-height:1.4}
+.admin-close{font-size:22px;line-height:1;border:0;color:#efd9cb;background:#392523;border-radius:8px;padding:7px 11px}
+.tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin-top:21px}
+.tab{border:1px solid #49312a;color:#c0aaa0;padding:11px 3px;background:#1b1210;border-radius:8px;font-size:11px;font-weight:800;line-height:1.15}
+.tab.selected{background:#f3412b;color:#fff;border-color:#f3412b;box-shadow:0 0 13px #f3412b44}
+#editor-content{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:20px 22px 26px;scrollbar-width:thin;scrollbar-color:#6c3730 #1b1311}
+.section-label{font-size:12px;color:#ff9879;text-transform:uppercase;letter-spacing:2px;font-weight:900;margin:5px 0 12px}
+.edit-item-row{display:flex;align-items:center;gap:8px;width:100%;margin-bottom:7px;padding:10px 10px;border:1px solid #42302b;border-radius:9px;background:#211814;color:#f9e6d6;text-align:left;cursor:pointer}
+.edit-item-row.active{border-color:#f24e35;background:#39211a;box-shadow:inset 3px 0 #ff6242}
+.edit-item-thumb{height:49px;width:58px;object-fit:contain;background:#150d0b;border-radius:5px}
+.edit-item-text{flex:1;min-width:0}.edit-item-text strong{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.edit-item-text small{display:block;color:#bd9e91;margin-top:4px;font-size:12px}
+.pill{font-size:11px;color:#aaa;background:#3b2521;padding:4px 8px;border-radius:100px;white-space:nowrap}
+.field{display:block;margin:14px 0}.field label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:1px;font-weight:900;color:#cfb5a7;margin-bottom:7px}
+.field input,.field textarea,.field select{background:#0f0c0b;color:#fff7ec;border:1px solid #5a3b33;border-radius:8px;outline:none;padding:11px 12px;width:100%;font-size:15px;transition:border-color .2s}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:#ff6742;box-shadow:0 0 0 3px #ff5b3c22}
+.field textarea{resize:vertical;min-height:75px;line-height:1.4}
+.field small{color:#a98b7f;display:block;margin-top:5px;line-height:1.35}
+.fieldline{display:flex;gap:11px;align-items:flex-start}.fieldline>*{flex:1;min-width:0}
+.edit-separator{height:1px;background:#392a25;margin:19px 0}
+.editor-actions{display:flex;gap:8px;flex-wrap:wrap}.act{border:1px solid #694035;border-radius:8px;background:#3a241e;color:#fbe5d8;padding:10px 14px;font-size:14px;font-weight:900}
+.act.primary{background:#ef4329;border-color:#ef4329;color:white}.act.green{background:#27624a;border-color:#4d9473}.act.danger{background:#43201d;border-color:#7b3731;color:#ffae9c}
+.act.full{width:100%;display:block}.act:hover{filter:brightness(1.14)}
+.upload-box{padding:15px;text-align:center;background:#110d0c;border:1px dashed #855044;border-radius:10px}
+.upload-box img{display:block;max-width:100%;width:auto;height:145px;margin:0 auto 8px;object-fit:contain}
+.upload-box input{width:100%;font-size:13px}
+.toggle-row{display:flex;justify-content:space-between;align-items:center;gap:15px;margin:14px 0;background:#211915;border:1px solid #45332d;padding:14px;border-radius:9px}
+.toggle-row strong{font-size:14px}.toggle-row small{display:block;color:#a98c80;font-size:12px;margin-top:5px;line-height:1.3}
+.toggle-row input{accent-color:#ef5032;width:21px;height:21px}
+.editor-bottom{border-top:1px solid #44302a;background:#201712;padding:12px 20px;display:flex;gap:9px;align-items:center}
+.editor-bottom .act{flex:1}.save-status{color:#ae948a;font-size:12px;flex:1}
+.note{border-left:3px solid #eb6344;background:#281a17;color:#e7c9b7;padding:14px 15px;line-height:1.5;font-size:13px;border-radius:0 7px 7px 0;margin:15px 0}
+#toast{position:fixed;bottom:20px;right:22px;z-index:90;min-width:250px;max-width:400px;background:#251712;border:1px solid #c85b3b;color:#fff5e6;padding:15px 18px;border-radius:10px;box-shadow:0 10px 34px #000b;font-weight:700;display:none}
+#toast.show{display:block} #fileImport{display:none}
+@media(max-width:800px){#editor{width:100vw;flex:0 0 100vw}#app.editing #display{display:none}}
+
+/* Cinema menu v4 */
+.dish-card{transform-origin:center;transition:transform .55s cubic-bezier(.2,.8,.2,1),border-color .45s,box-shadow .45s,filter .45s}
+.dish-card.spotlit{transform:translateY(-5px) scale(1.035);z-index:6;box-shadow:0 0 34px rgba(252,99,39,.55),inset 0 0 4px #ffcc69}
+#ambientChicken{position:absolute;left:24px;bottom:76px;z-index:8;pointer-events:none;filter:drop-shadow(0 6px 13px #0009);transition:left 2.7s cubic-bezier(.22,.72,.38,1),opacity .35s;animation:ambientBob 1.9s ease-in-out infinite}
+#ambientChicken .chicken-body{display:block;font-size:49px;line-height:1;transform:scaleX(-1)}
+#ambientChicken.chicken-hidden{opacity:0}
+@keyframes ambientBob{0%,100%{transform:translateY(0) rotate(-3deg)}35%{transform:translateY(-16px) rotate(4deg)}65%{transform:translateY(-5px) rotate(-1deg)}}
+#dailySpecialPill{flex:0 0 405px;max-width:405px;height:100%;padding:7px 24px 7px 21px;background:linear-gradient(100deg,#4e140d,#b62717);border-left:2px solid #fb914c;display:flex;align-items:center;gap:14px;overflow:hidden;box-shadow:-12px 0 24px rgba(0,0,0,.24)}
+#dailySpecialPill[hidden]{display:none}
+.special-pip{width:7px;height:38px;background:#ffd384;box-shadow:0 0 14px #ffaf46;flex:0 0 auto}
+.special-lines{display:flex;flex-direction:column;min-width:0;gap:1px;flex:1}
+#dailySpecialLabel{font-size:12px;font-weight:1000;letter-spacing:2.2px;color:#ffd690;text-transform:uppercase;white-space:nowrap}
+#dailySpecialName{font-family:Impact,'Arial Black',sans-serif;font-style:italic;font-size:25px;line-height:1;color:#fff7e7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
+#dailySpecialPrice{flex:0 0 auto;font-family:Impact,'Arial Black',sans-serif;font-size:31px;color:#fff3d1}
+#takeover{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 70% 45%,rgba(125,30,10,.35),transparent 59%),rgba(3,2,2,.91);opacity:0;visibility:hidden;pointer-events:none;transform:scale(1.02);transition:opacity .48s ease,transform .65s cubic-bezier(.2,.75,.2,1),visibility .48s}
+#takeover.open{opacity:1;visibility:visible;transform:scale(1)}
+#takeover:before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(137deg,rgba(255,255,255,.015) 0 2px,transparent 2px 9px);pointer-events:none}
+#takeover:after{content:'';position:absolute;inset:0 0 auto;height:9px;background:linear-gradient(90deg,transparent,#fa5327 30%,#ffcf79 50%,#fa5327 70%,transparent)}
+.takeover-shell{position:relative;width:1630px;height:770px;border-radius:32px;display:grid;grid-template-columns:47% 53%;overflow:hidden;background:radial-gradient(ellipse at 79% 55%,#542012 0%,#28100c 35%,#120a09 78%);border:2px solid rgba(248,92,46,.71);box-shadow:0 0 0 10px rgba(249,66,29,.07),0 0 95px rgba(255,73,20,.22),0 50px 100px #000c}
+.takeover-shell:before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(120deg,transparent 18%,rgba(255,255,255,.035) 44%,transparent 62%);z-index:2}
+.takeover-content{position:relative;z-index:3;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:88px 38px 80px 86px;min-width:0}
+.takeover-kicker{display:inline-block;padding:13px 22px;background:linear-gradient(90deg,#e6361a,#8a1a0e);border-radius:6px;transform:skewX(-8deg);font-weight:900;font-size:23px;letter-spacing:3.7px;color:#ffe5b4;box-shadow:0 7px 26px #a7150d70}
+.takeover-number{font-size:20px;font-weight:900;letter-spacing:5px;color:#faab5f;margin-top:37px}
+.takeover-title{font-family:Impact,'Arial Black',sans-serif;font-style:italic;text-transform:uppercase;font-size:97px;line-height:.99;letter-spacing:-1.6px;color:#fff0d4;text-shadow:4px 7px 0 #290b06;margin:19px 0 22px;max-width:680px;overflow-wrap:break-word}
+.takeover-description{font-size:29px;font-weight:600;line-height:1.4;color:#efd7bd;max-width:590px;min-height:40px}
+.takeover-price{font-family:Impact,'Arial Black',sans-serif;font-style:italic;font-size:92px;letter-spacing:2px;line-height:1;color:#191009;background:#fcd38d;padding:10px 35px;clip-path:polygon(1% 4%,15% 1%,28% 5%,54% 2%,75% 6%,98% 1%,99% 95%,77% 98%,50% 94%,27% 99%,0 96%);margin-top:40px;transform:rotate(-3deg)}
+.takeover-photo{position:relative;display:flex;align-items:center;justify-content:center;overflow:visible;min-width:0}
+.takeover-photo:before{content:'';position:absolute;width:740px;height:550px;border-radius:50%;background:radial-gradient(ellipse,#e35c21 0%,#8d1e0c 38%,transparent 69%);filter:blur(60px);opacity:.67}
+.takeover-photo img{position:relative;display:block;width:91%;height:94%;object-fit:contain;filter:drop-shadow(0 34px 24px rgba(0,0,0,.82)) saturate(1.16);animation:takeoverFloat 3.6s ease-in-out infinite}
+.takeover-photo img[hidden]{display:none}
+.takeover-fallback{font-size:220px;display:none;position:relative}
+.takeover-photo.no-photo .takeover-fallback{display:block}
+.takeover-progress{position:absolute;bottom:0;left:0;height:9px;background:linear-gradient(90deg,#ef2918,#ffe2a5);width:0;box-shadow:0 0 28px #ff6d3c}
+#takeover.open .takeover-progress{animation:progressFill var(--hold,3600ms) linear forwards}
+#takeover.promo .takeover-shell{background:radial-gradient(ellipse at 82% 44%,#733019,#2b0c08 56%,#100707 90%);border-color:#f8b15e}
+#takeover.promo .takeover-kicker{background:linear-gradient(90deg,#df331e,#da8419)}
+#takeover.promo .takeover-title{color:#ffdca3;font-size:106px}
+#takeover.promo .takeover-price{font-size:84px}
+@keyframes takeoverFloat{0%,100%{transform:translateY(9px) scale(.98)}50%{transform:translateY(-13px) scale(1.01)}}
+@keyframes progressFill{from{width:0}to{width:100%}}
+#stage.low-motion #ambientChicken{animation-duration:4s}
+#stage.low-motion .takeover-photo img{animation:none}
+#stage.no-motion #ambientChicken{animation:none}
+@media(prefers-reduced-motion:reduce){#takeover{transition:none}.takeover-photo img{animation:none!important}}
+</style>
+</head>
+<body>
+<script type="application/json" id="startupData">{"buildId":"papis-v4-cinema-daily-2026-11-21","featureSpotlight":true,"featureChicken":true,"brand":"Papi's","subtitle":"Hot Chicken","ticker":"TENDERS  •  CHICKEN SANDWICHES  •  LOADED FRIES  •  MAC & CHEESE  •  PAPI’S HOT CHICKEN","accent":"#f53225","motion":"normal","items":[{"id":"papis-1","number":"1","name":"Combo #1","desc":"2 tenders, fries, Texas toast, sauce","price":"13.49","tag":"","image":"images/01_Combo_1.png","enabled":true},{"id":"papis-2","number":"2","name":"Combo #2","desc":"1 sandwich, 1 tender, fries, sauce (sandwich has coleslaw & pickles)","price":"14.49","tag":"","image":"images/02_Combo_2.png","enabled":true},{"id":"papis-3","number":"3","name":"Papi's Special","desc":"4 tenders, fries, Texas toast, sauce","price":"16.49","tag":"","image":"images/03_Papis_Special.png","enabled":true},{"id":"papis-4","number":"4","name":"Loaded Fries","desc":"Fries, mac & cheese, chicken, sauce","price":"15.99","tag":"","image":"images/04_Loaded_Fries.png","enabled":true},{"id":"papis-5","number":"5","name":"Loaded Burrito","desc":"Flour tortilla, fries, mac & cheese, chicken, sauce","price":"13.49","tag":"","image":"images/05_Loaded_Burrito.png","enabled":true},{"id":"papis-6","number":"6","name":"Papi's Bowl","desc":"Mac and cheese bowl topped with chicken, pickles, and sauce","price":"13.49","tag":"","image":"images/06_Papis_Bowl.png","enabled":true},{"id":"papis-7","number":"7","name":"Mac & Cheese Lovers","desc":"","price":"14.99","tag":"","image":"images/07_Mac_Cheese_Lovers.png","enabled":true},{"id":"papis-8","number":"8","name":"Munchie Box","desc":"Loaded fries, coleslaw & a tender","price":"13.99","tag":"","image":"images/08_Munchie_Box.png","enabled":true}],"spotlightDuration":3.6,"promoEnabled":true,"promoEvery":2,"promoDuration":4.5,"dailySpecial":{"enabled":false,"label":"TODAY'S SPECIAL","itemId":"papis-3","note":""},"promos":[{"id":"promo-1","enabled":true,"itemId":"papis-3","title":"PAPI'S SPECIAL","subtitle":"4 tenders • fries • Texas toast • sauce"},{"id":"promo-2","enabled":true,"itemId":"papis-4","title":"LOADED FRIES","subtitle":"Fries • mac & cheese • chicken • sauce"}]}</script>
+<div id="app">
+<aside id="editor" aria-label="Menu editor">
+ <header class="editor-top">
+  <div class="editor-topbar"><h1>🔥 Papi's <em>Menu Studio</em></h1><button class="admin-close" id="closeEditor" title="Close editor">×</button></div>
+  <small>Make changes, preview them instantly, then publish an updated site ZIP.</small>
+  <nav class="tabs" id="tabs" aria-label="Editor sections"><button class="tab selected" data-tab="items">Items</button><button class="tab" data-tab="brand">Branding</button><button class="tab" data-tab="effects">Motion</button><button class="tab" data-tab="promos">Promos & Special</button><button class="tab" data-tab="publish">Publish</button></nav>
+ </header>
+ <div id="editor-content"></div>
+ <footer class="editor-bottom"><span class="save-status" id="saveStatus">Ready</span><button class="act primary" id="publishShortcut">Publish ZIP ↓</button></footer>
+</aside>
+<main id="display">
+ <section id="stage" aria-label="Papi's Hot Chicken digital menu board">
+  <div class="fire-glow"></div><div class="top-edge"></div>
+  <header class="board-header">
+   <span class="side-hatch left"></span><span class="side-hatch right"></span>
+   <div class="brand-block">
+    <svg class="mascot" viewBox="0 0 180 185" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M60 53 Q26 22 49 14 Q63 12 72 34 Q66 -5 95 6 Q111 17 99 41 Q116 5 136 27 Q143 44 118 58" fill="#e5331d" stroke="#170806" stroke-width="8" stroke-linejoin="round"/>
+      <path d="M43 71 Q53 45 91 42 Q134 40 147 73 L153 115 Q143 155 101 167 L54 153 Q22 134 28 96 Z" fill="#fff0db" stroke="#180b08" stroke-width="9"/>
+      <path d="M28 113 L9 95 L28 87 L14 73 L45 80" fill="#e8d0b3" stroke="#170909" stroke-width="7"/>
+      <path d="M105 111 Q151 107 161 91 L178 104 L151 119 L117 122" fill="#f3a52c" stroke="#200c07" stroke-width="8" stroke-linejoin="round"/>
+      <path d="M88 113 Q94 137 108 141 Q126 134 126 117" fill="#e9351d" stroke="#180807" stroke-width="8"/>
+      <path d="M52 78 L109 78 Q124 75 137 70 L133 91 Q117 104 102 101 L88 95 L57 102 Q49 95 52 78" fill="#0d0d10" stroke="#0a0504" stroke-width="7"/>
+      <path d="M58 82 L80 82 M104 82 L122 79" stroke="#7799a5" stroke-width="4" stroke-linecap="round"/>
+      <path d="M45 151 L91 167 L118 150 Q101 183 73 179 Q44 174 25 159 Z" fill="#df291c" stroke="#180805" stroke-width="8"/>
+    </svg>
+    <div class="brand-words"><div class="main-brand" id="brandTitle"></div><div class="sub-brand"><span id="brandSubtitle"></span><i class="flame-icon" aria-hidden="true">♨</i></div></div>
+   </div><div class="header-line"></div>
+  </header>
+  <div class="menu-grid" id="menuGrid"></div>
+  <footer class="board-footer"><div class="footer-mark"><b>✦</b><span id="footerBrand">PAPI'S</span></div><div class="ticker-mask"><div class="ticker-track" id="tickerTrack"></div></div><div class="footer-checks" id="footerChecks"></div><div id="dailySpecialPill" hidden><span class="special-pip"></span><span class="special-lines"><small id="dailySpecialLabel"></small><strong id="dailySpecialName"></strong></span><span id="dailySpecialPrice"></span></div></footer>
+  <div id="ambientChicken" aria-hidden="true"><span class="chicken-body">🐔</span></div>
+  <div id="takeover" aria-hidden="true" role="presentation">
+   <div class="takeover-shell"><div class="takeover-content"><div class="takeover-kicker" id="takeoverKicker"></div><div class="takeover-number" id="takeoverNumber"></div><div class="takeover-title" id="takeoverTitle"></div><div class="takeover-description" id="takeoverDescription"></div><div class="takeover-price" id="takeoverPrice"></div></div><div class="takeover-photo" id="takeoverPhoto"><img id="takeoverImage" alt=""><span class="takeover-fallback">🍗</span></div><div class="takeover-progress"></div></div>
+  </div>
+ </section>
+ <div id="quick-tools"><button class="qtool" id="toggleEditor" title="Edit the menu (E)">✎ EDIT</button><button class="qtool" id="toggleFullscreen" title="Toggle fullscreen (F)">⛶ FULLSCREEN</button></div>
+</main>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="fileImport" accept=".json,application/json" />
+<script>
+(function(){'use strict';
+ const STORAGE_KEY = 'papis-hot-chicken-menu-studio-v4-cinema';
+ const STARTUP_CONFIG = JSON.parse(document.getElementById('startupData').textContent);
+ const clone = o => JSON.parse(JSON.stringify(o));
+ const app = document.getElementById('app');
+ const stage = document.getElementById('stage');
+ const editorContent = document.getElementById('editor-content');
+ let current = clone(STARTUP_CONFIG), activeTab='items', selectedId=null, spotTimer=null, spotIndex=-1, toastTimer=null, chickenTimer=null, cycleTimer=null, takeoverTimer=null, featureCounter=0, promoCursor=-1;
+ let tempSaveSucceeded=true;
+ const pendingImages=new Map(); // images chosen in editor but not yet uploaded to GitHub
+ const previewURLs=new Map();
+ const imagePreview = path => previewURLs.get(path) || path || '';
+ function cleanImagePath(s){
+  const raw=String(s||'').trim();
+  return /^images\/[A-Za-z0-9._-]+\.(png|jpe?g|webp|avif|gif)$/i.test(raw)?raw:'';
+ }
+ function imageFileName(it,f){
+  const ext=(f.name.match(/\.(png|jpe?g|webp|avif|gif)$/i)||[])[1]?.toLowerCase();
+  if(!ext)throw Error('Use PNG, JPG, WebP, AVIF, or GIF.');
+  const part=(it.name||'menu-item').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,44)||'food';
+  return 'images/'+String(it.number||'').replace(/[^0-9]/g,'').padStart(2,'0').slice(0,4)+'_'+part+'.'+ext;
+ }
+
+ const $ = id => document.getElementById(id);
+ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+ function price(v){const n=Number(String(v||'').replace(/[^\d.]/g,''));return '$'+(Number.isFinite(n)?n:0).toFixed(2)}
+ function safeColor(v){return /^#[0-9a-fA-F]{6}$/.test(v)?v:'#f53225'}
+ function sanitize(data){
+  if(!data||typeof data!=='object'||!Array.isArray(data.items))throw Error('This file does not contain a valid menu.');
+  const d=clone(STARTUP_CONFIG); d.buildId=String(data.buildId||Date.now());
+  for(const k of ['brand','subtitle','ticker','accent','motion'])if(typeof data[k]==='string')d[k]=data[k].slice(0,k==='ticker'?350:100);
+  d.accent=safeColor(d.accent); if(!['normal','low','off'].includes(d.motion))d.motion='normal';
+  d.featureSpotlight=data.featureSpotlight!==false;
+  d.featureChicken=data.featureChicken!==false;
+  d.spotlightDuration=[3,3.5,3.6,4].includes(Number(data.spotlightDuration))?Number(data.spotlightDuration):3.6;
+  d.promoEnabled=data.promoEnabled!==false;
+  d.promoEvery=Math.max(1,Math.min(8,parseInt(data.promoEvery,10)||2));
+  d.promoDuration=Math.max(3,Math.min(8,Number(data.promoDuration)||4.5));
+  const special=data.dailySpecial && typeof data.dailySpecial==='object'?data.dailySpecial:{};
+  d.dailySpecial={enabled:special.enabled===true,label:String(special.label||"TODAY'S SPECIAL").slice(0,38),itemId:String(special.itemId||'').slice(0,55),note:String(special.note||'').slice(0,120)};
+  d.promos=Array.isArray(data.promos)?data.promos.slice(0,8).map((v,i)=>({id:String(v.id||'promo-'+i).replace(/[^\w-]/g,'').slice(0,55),enabled:v.enabled!==false,itemId:String(v.itemId||'').slice(0,55),title:String(v.title||'PAPI’S PICKS').slice(0,75),subtitle:String(v.subtitle||'').slice(0,180)})):[];
+  d.items=data.items.slice(0,24).map((it,i)=>({
+   id:String(it.id||'item-'+i).replace(/[^\w-]/g,'').slice(0,55)||'item-'+i,
+   number:String(it.number||i+1).slice(0,8), name:String(it.name||'New Item').slice(0,80),
+   desc:String(it.desc||'').slice(0,210), price:String(it.price||'0').slice(0,15),
+   tag:String(it.tag||'').slice(0,32),
+   image:typeof it.image==='string'?cleanImagePath(it.image):'',
+   enabled:it.enabled!==false
+  }));
+  return d;
+ }
+ function load(){try{let raw=localStorage.getItem(STORAGE_KEY);if(raw){let found=sanitize(JSON.parse(raw));if(found.buildId===STARTUP_CONFIG.buildId)current=found}}catch(e){console.warn('Local storage not available:',e)} }
+ function save(){
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(current));tempSaveSucceeded=true;$('saveStatus').textContent='✓ Saved locally';}
+  catch(e){tempSaveSucceeded=false;$('saveStatus').textContent='Local save unavailable';toast('Local storage full — use Publish HTML to save changes.');}
+ }
+ function toast(message){const el=$('toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),3800)}
+ function fit(){const area=$('display');const scale=Math.min(area.clientWidth/1920,area.clientHeight/1080);stage.style.transform='translate(-50%,-50%) scale('+Math.max(scale,.01)+')';}
+ const resizeObserver=typeof ResizeObserver!=='undefined'?new ResizeObserver(fit):null;
+ if(resizeObserver)resizeObserver.observe($('display'));else window.addEventListener('resize',fit);
+ function formatBrand(s){return String(s||'Papi’s').toUpperCase()}
+ function render(){
+  document.documentElement.style.setProperty('--accent',safeColor(current.accent));
+  $('brandTitle').textContent=formatBrand(current.brand);$('brandSubtitle').textContent=formatBrand(current.subtitle);
+  $('footerBrand').textContent=formatBrand(current.brand);
+  const news=(current.ticker||'PICK YOUR FAVORITE • TENDERS • SANDWICHES • LOADED FRIES').toUpperCase();
+  $('tickerTrack').innerHTML='<span class="ticker-copy">'+esc(news)+'</span><span class="ticker-copy">'+esc(news)+'</span><span class="ticker-copy">'+esc(news)+'</span><span class="ticker-copy">'+esc(news)+'</span>';
+  stage.classList.toggle('low-motion',current.motion==='low');stage.classList.toggle('no-motion',current.motion==='off');stage.classList.toggle('force-motion',current.motion!=='off');
+  const active=current.items.filter(it=>it.enabled);
+  const grid=$('menuGrid'); const count=active.length;
+  grid.style.gridTemplateColumns='repeat('+Math.min(4,Math.max(1,count))+',minmax(0,1fr))';
+  grid.style.gridTemplateRows='repeat('+Math.max(1,Math.ceil(count/4))+',minmax(0,1fr))';
+  if(count>12){grid.style.gap='9px'}else grid.style.gap='17px';
+  grid.innerHTML=active.map((it,i)=>{
+   let length=it.name.length;let nameClass=length>20?'verylong':length>15?'long':'';
+   return '<article class="dish-card" style="--ix:'+i+'" data-card-id="'+esc(it.id)+'">'
+    +'<div class="card-head"><div class="card-number">#'+esc(it.number)+'</div><div class="card-title '+nameClass+'">'+esc(it.name)+'</div></div>'
+    +'<div class="card-description">'+esc(it.desc)+'</div>'
+    +'<div class="food-window '+(it.image?'':'no-photo')+'">'+(it.image?'<img class="food-image" src="'+esc(imagePreview(it.image))+'" alt="'+esc(it.name)+'">':'<span class="fallback">🍗</span>')+'</div>'
+    +(it.tag?'<span class="dish-tag">'+esc(it.tag)+'</span>':'')
+    +'<div class="price-sticker"><span>'+esc(price(it.price))+'</span></div>'
+    +'</article>';
+  }).join('');
+  clearInterval(spotTimer);spotIndex=-1;
+  updateDailySpecial();
+  setupChicken();
+  startCinema();
+ }
+ function setupChicken(){
+  clearInterval(chickenTimer);
+  const el=$('ambientChicken');
+  const show=current.featureChicken!==false && current.motion!=='off';
+  el.classList.toggle('chicken-hidden',!show);
+  if(!show)return;
+  let towardRight=true;
+  const shift=()=>{el.style.left=(towardRight?'1750px':'52px');towardRight=!towardRight};
+  el.style.left='40px';
+  chickenTimer=setInterval(shift,current.motion==='low'?16000:10600);
+ }
+ function updateDailySpecial(){
+  const sp=current.dailySpecial||{},item=current.items.find(v=>v.id===sp.itemId&&v.enabled);
+  const active=sp.enabled===true&&!!item;
+  $('dailySpecialPill').hidden=!active;
+  $('footerChecks').style.display=active?'none':'';
+  if(active){
+   $('dailySpecialLabel').textContent=sp.label||"TODAY'S SPECIAL";
+   $('dailySpecialName').textContent=item.name;
+   $('dailySpecialPrice').textContent=price(item.price);
+  }
+ }
+ function stopCinema(){clearTimeout(cycleTimer);clearTimeout(takeoverTimer);$('takeover').classList.remove('open');$('takeover').setAttribute('aria-hidden','true');}
+ function startCinema(){
+  stopCinema();featureCounter=0;promoCursor=-1;spotIndex=-1;
+  if(current.motion==='off'||document.hidden||app.classList.contains('editing'))return;
+  const hasFeatures=current.featureSpotlight!==false&&current.items.some(it=>it.enabled);
+  const hasPromos=current.promoEnabled!==false&&(current.promos||[]).some(x=>x.enabled);
+  if(hasFeatures||hasPromos)cycleTimer=setTimeout(nextScene,5500);
+ }
+ function showScene(type,item,slide,duration){
+  const overlay=$('takeover');
+  const isPromo=type==='promo';
+  const title=isPromo?(slide.title||item?.name||'PAPI’S HOT CHICKEN'):item.name;
+  const desc=isPromo?(slide.subtitle||item?.desc||''):item.desc;
+  $('takeoverKicker').textContent=isPromo?'PAPI’S HOT CHICKEN • FEATURED':'STRAIGHT FROM PAPI’S KITCHEN';
+  $('takeoverNumber').textContent=isPromo?'MENU HIGHLIGHTS':'MENU ITEM #'+String(item.number);
+  $('takeoverTitle').textContent=title;
+  $('takeoverTitle').style.fontSize=title.length>32?'53px':title.length>23?'65px':title.length>16?'79px':(isPromo?'106px':'97px');
+  $('takeoverDescription').textContent=desc;
+  $('takeoverPrice').textContent=item?price(item.price):'';
+  $('takeoverPrice').style.display=item?'block':'none';
+  const src=item?.image?imagePreview(item.image):'';
+  $('takeoverImage').src=src;
+  $('takeoverImage').alt=item?item.name:'';
+  $('takeoverImage').hidden=!src;
+  $('takeoverPhoto').classList.toggle('no-photo',!src);
+  overlay.classList.toggle('promo',isPromo);
+  overlay.style.setProperty('--hold',duration+'ms');
+  overlay.classList.remove('open');
+  void overlay.offsetWidth;
+  overlay.classList.add('open');overlay.setAttribute('aria-hidden','false');
+  takeoverTimer=setTimeout(()=>{
+   overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');
+   document.querySelectorAll('.dish-card.spotlit').forEach(e=>e.classList.remove('spotlit'));
+   cycleTimer=setTimeout(nextScene,current.motion==='low'?6700:4700);
+  },duration);
+ }
+ function nextScene(){
+  if(current.motion==='off'||document.hidden)return;
+  const active=current.items.filter(it=>it.enabled);
+  const promos=(current.promos||[]).filter(sl=>sl.enabled);
+  const doPromo=current.promoEnabled!==false&&promos.length>0&&(current.featureSpotlight===false||featureCounter>=current.promoEvery||!active.length);
+  if(doPromo){
+   featureCounter=0;promoCursor=(promoCursor+1)%promos.length;
+   const slide=promos[promoCursor];const item=current.items.find(it=>it.id===slide.itemId&&it.enabled);
+   showScene('promo',item,slide,Math.round(current.promoDuration*1000));return;
+  }
+  if(current.featureSpotlight!==false&&active.length){
+   featureCounter++;spotIndex=(spotIndex+1)%active.length;
+   const item=active[spotIndex];
+   document.querySelectorAll('.dish-card').forEach(card=>card.classList.toggle('spotlit',card.dataset.cardId===item.id));
+   showScene('spotlight',item,null,Math.round(current.spotlightDuration*1000));return;
+  }
+  if(promos.length&&current.promoEnabled!==false){
+   promoCursor=(promoCursor+1)%promos.length;
+   const slide=promos[promoCursor],item=current.items.find(it=>it.id===slide.itemId&&it.enabled);
+   showScene('promo',item,slide,Math.round(current.promoDuration*1000));
+  }
+ }
+ function makeField(label,id,value,type='text',help=''){
+  let control=type==='textarea'?'<textarea id="'+id+'">'+esc(value)+'</textarea>':'<input id="'+id+'" type="'+esc(type)+'" value="'+esc(value)+'"'+(type==='number'?' step="0.01" min="0"':'')+'>';
+  return '<div class="field"><label for="'+id+'">'+esc(label)+'</label>'+control+(help?'<small>'+esc(help)+'</small>':'')+'</div>';
+ }
+ function renderList(){const list=$('itemList');if(!list)return;
+  list.innerHTML=current.items.map(it=>'<button class="edit-item-row '+(it.id===selectedId?'active':'')+'" data-id="'+esc(it.id)+'"><img class="edit-item-thumb" src="'+esc(imagePreview(it.image))+'" alt=""><span class="edit-item-text"><strong>#'+esc(it.number)+' '+esc(it.name)+'</strong><small>'+esc(price(it.price))+'</small></span>'+(it.enabled?'':'<span class="pill">HIDDEN</span>')+'</button>').join('');
+  list.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>selectItem(b.dataset.id)));
+ }
+ function showItems(){
+  editorContent.innerHTML='<div class="section-label">Menu items • '+current.items.length+' total</div><div id="itemList"></div>'
+   +'<button class="act primary full" id="addItem" style="margin-top:9px">+ Add menu item</button><div class="edit-separator"></div>'
+   +'<div id="itemForm"></div>';
+  $('addItem').onclick=()=>{if(current.items.length>=24){toast('Maximum 24 items in this edition.');return}const id='item-'+Date.now();current.items.push({id,number:String(current.items.length+1),name:'New Menu Item',desc:'',price:'0.00',tag:'',image:'',enabled:true});save();render();selectItem(id)};
+  if(!current.items.some(it=>it.id===selectedId))selectedId=current.items[0]?.id||null;
+  renderList();showItemForm();
+ }
+ function selectItem(id){selectedId=id;renderList();showItemForm();}
+ function showItemForm(){
+  const it=current.items.find(x=>x.id===selectedId), form=$('itemForm');if(!form)return;
+  if(!it){form.innerHTML='<p>No items yet. Add the first one above.</p>';return}
+  form.innerHTML='<div class="section-label">Editing #'+esc(it.number)+' — '+esc(it.name)+'</div>'
+   +'<div class="fieldline">'+makeField('Menu number','f-number',it.number)+makeField('Price ($)','f-price',Number(String(it.price).replace(/[^\d.]/g,''))||0,'number')+'</div>'
+   +makeField('Item name','f-name',it.name)
+   +makeField('Description','f-desc',it.desc,'textarea','Keep descriptions short enough to read from across the restaurant.')
+   +makeField('Optional label','f-tag',it.tag,'text','Example: NEW or LIMITED; leave blank for no label.')
+   +'<div class="toggle-row"><span><strong>Show on TV menu</strong><small>Hide an item without deleting it</small></span><input type="checkbox" id="f-enabled" '+(it.enabled?'checked':'')+'></div>'
+   +'<div class="field"><label>Image file path</label><input id="f-imgpath" value="'+esc(it.image)+'" placeholder="images/01_Combo_1.png"><small>Use an image inside the /images folder. The file must exist on your site.</small></div>'
+   +'<div class="field"><label>Replace food photo</label><div class="upload-box">'+(it.image?'<img src="'+esc(imagePreview(it.image))+'" alt="Current food photo">':'<div style="font-size:75px;margin-bottom:10px">🍗</div>')
+   +'<input id="f-image" type="file" accept="image/png,image/jpeg,image/webp,image/avif,image/gif" aria-label="Upload food image"><small style="margin-top:9px">Choose a photo at its ORIGINAL resolution. It stays a separate image file; use Publish Site ZIP to upload it along with your menu.</small>'+(pendingImages.has(it.image)?'<small style="color:#ffc266">✓ New image staged for export</small>':'')+'</div></div>'
+   +'<div class="editor-actions"><button class="act" id="moveUp">↑ Move up</button><button class="act" id="moveDown">↓ Move down</button><button class="act danger" id="deleteItem">Delete</button></div>';
+  const update=(prop,val)=>{it[prop]=val;save();render();renderList()};
+  for(let prop of ['number','name','desc','price','tag'])$('f-'+prop).addEventListener('input',e=>update(prop,e.target.value));
+  $('f-enabled').addEventListener('change',e=>update('enabled',e.target.checked));
+  $('f-imgpath').addEventListener('change',e=>{const path=cleanImagePath(e.target.value);if(e.target.value.trim()&&!path){toast('Use a path such as images/my_photo.png');e.target.value=it.image;return}it.image=path;save();render();renderList();showItemForm()});
+  $('f-image').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{
+    if(f.size>30*1024*1024)throw Error('Select an image under 30 MB.');
+    const path=imageFileName(it,f);
+    if(previewURLs.has(path))URL.revokeObjectURL(previewURLs.get(path));
+    pendingImages.set(path,f);
+    previewURLs.set(path,URL.createObjectURL(f));
+    it.image=path;
+    save();render();renderList();showItemForm();
+    toast('Original photo kept at full quality. Publish Site ZIP to include it.');
+   }catch(err){toast('Photo upload failed: '+err.message)}
+  });
+  const idx=current.items.indexOf(it);
+  $('moveUp').disabled=idx===0; $('moveDown').disabled=idx===current.items.length-1;
+  $('moveUp').onclick=()=>{if(idx>0){[current.items[idx-1],current.items[idx]]=[it,current.items[idx-1]];save();render();showItems()}};
+  $('moveDown').onclick=()=>{if(idx<current.items.length-1){[current.items[idx+1],current.items[idx]]=[it,current.items[idx+1]];save();render();showItems()}};
+  $('deleteItem').onclick=()=>{if(!confirm('Delete "'+it.name+'" from the menu?'))return;current.items.splice(idx,1);selectedId=current.items[Math.min(idx,current.items.length-1)]?.id||null;save();render();showItems();toast('Item removed.')};
+ }
+ function fileToDataURL(f){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(Error('Could not read the file.'));r.readAsDataURL(f)})}
+ function loadImage(src){return new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(Error('Unsupported or damaged image.'));i.src=src})}
+ function showBrand(){editorContent.innerHTML='<div class="section-label">Restaurant branding</div>'
+  +makeField('Restaurant name','b-brand',current.brand,'text','Appears as the large menu heading.')
+  +makeField('Subtitle','b-subtitle',current.subtitle)
+  +makeField('Bottom moving message','b-ticker',current.ticker,'textarea','Use • to separate phrases. Text scrolls across the TV menu.')
+  +'<div class="field"><label for="b-accent">Brand color</label><input type="color" id="b-accent" value="'+esc(safeColor(current.accent))+'" style="height:52px;cursor:pointer"></div>'
+  +'<div class="note">Menu is designed for 1920 × 1080 landscape TVs. Featured items and promo slides temporarily take over the screen, then the full menu returns.</div>';
+  for(const field of ['brand','subtitle','ticker','accent'])$('b-'+field).addEventListener('input',e=>{current[field]=e.target.value;save();render()});
+ }
+ function showEffects(){editorContent.innerHTML='<div class="section-label">Motion & cinema settings</div>'
+  +'<div class="field"><label for="motionInput">Animation style</label><select id="motionInput"><option value="normal">Cinematic — full motion</option><option value="low">Gentle — slower transitions</option><option value="off">Still — no effects</option></select></div>'
+  +'<div class="toggle-row"><span><strong>Center-screen featured items</strong><small>Each menu item takes over the screen for a few seconds, then returns to the grid.</small></span><input type="checkbox" id="fx-spotlight" '+(current.featureSpotlight!==false?'checked':'')+'></div>'
+  +'<div class="field"><label for="fx-spot-time">Featured item hold</label><select id="fx-spot-time"><option value="3">3 seconds</option><option value="3.5">3.5 seconds</option><option value="3.6">3.6 seconds</option><option value="4">4 seconds</option></select></div>'
+  +'<div class="toggle-row"><span><strong>Animated chicken decoration</strong><small>The chicken hops along the bottom of the screen. No game, prizes, or click action.</small></span><input type="checkbox" id="fx-chicken" '+(current.featureChicken!==false?'checked':'')+'></div>'
+  +'<div class="toggle-row"><span><strong>Automatic promo slides</strong><small>Show restaurant promotions between featured-food rotations.</small></span><input type="checkbox" id="fx-promos" '+(current.promoEnabled!==false?'checked':'')+'></div>'
+  +'<div class="fieldline">'+makeField('Show promo after N items','fx-every',current.promoEvery,'number')+makeField('Promo hold (seconds)','fx-promo-time',current.promoDuration,'number')+'</div>'
+  +'<div class="note">All items remain visible in the main grid between cinematic slides. When animation is Off, the menu stays completely still.</div>'
+  +'<div class="editor-actions"><button class="act primary" id="previewFeature">Preview featured item</button><button class="act" id="goFullScreen">Fullscreen</button></div>';
+  $('motionInput').value=current.motion;
+  $('fx-spot-time').value=String(current.spotlightDuration);
+  const update=(key,value)=>{current[key]=value;save();render()};
+  $('motionInput').onchange=e=>update('motion',e.target.value);
+  $('fx-spotlight').onchange=e=>update('featureSpotlight',e.target.checked);
+  $('fx-chicken').onchange=e=>update('featureChicken',e.target.checked);
+  $('fx-promos').onchange=e=>update('promoEnabled',e.target.checked);
+  $('fx-spot-time').onchange=e=>update('spotlightDuration',Number(e.target.value));
+  $('fx-every').onchange=e=>{const v=Math.max(1,Math.min(8,Math.round(Number(e.target.value)||2)));e.target.value=v;update('promoEvery',v)};
+  $('fx-promo-time').onchange=e=>{const v=Math.max(3,Math.min(8,Number(e.target.value)||4.5));e.target.value=v;update('promoDuration',v)};
+  $('previewFeature').onclick=()=>{stopCinema();const item=current.items.find(v=>v.enabled);if(item)showScene('spotlight',item,null,3600);else toast('Add a visible menu item first.')};
+  $('goFullScreen').onclick=()=>fullscreen();
+ }
+ function showPromos(){
+  const opts=current.items.map(it=>'<option value="'+esc(it.id)+'">#'+esc(it.number)+' '+esc(it.name)+'</option>').join('');
+  const sp=current.dailySpecial||{};
+  editorContent.innerHTML='<div class="section-label">Daily special • TV panel</div>'
+   +'<div class="toggle-row"><span><strong>Show Today’s Special panel</strong><small>Displays the selected menu item and its CURRENT price in the footer.</small></span><input id="sp-enabled" type="checkbox" '+(sp.enabled?'checked':'')+'></div>'
+   +makeField('Panel label','sp-label',sp.label||"TODAY'S SPECIAL")
+   +'<div class="field"><label for="sp-item">Featured special</label><select id="sp-item"><option value="">Choose an existing menu item</option>'+opts+'</select><small>This prevents inventing a new dish or price. You choose what counts as today’s special.</small></div>'
+   +'<div class="note">The daily special stays off until you enable it. Change or disable it manually each day; there is no automatic calendar-based change.</div>'
+   +'<div class="edit-separator"></div><div class="section-label">Promo slides</div>'
+   +'<div class="toggle-row"><span><strong>Play promotional slides</strong><small>Rotate between the promo cards below. Use Motion settings to change the frequency.</small></span><input id="pr-enabled" type="checkbox" '+(current.promoEnabled!==false?'checked':'')+'></div>'
+   +'<div id="promoList">'+(current.promos||[]).map((promo,i)=>'<section class="promo-edit-block" data-promo="'+i+'"><div class="section-label">Slide '+(i+1)+'</div>'
+       +'<div class="toggle-row"><span><strong>Enable this slide</strong></span><input type="checkbox" data-field="enabled" '+(promo.enabled?'checked':'')+'></div>'
+       +'<div class="field"><label>Use food photo from</label><select data-field="itemId"><option value="">No linked food image or price</option>'+opts+'</select></div>'
+       +'<div class="field"><label>Slide headline</label><input data-field="title" maxlength="75" value="'+esc(promo.title)+'"></div>'
+       +'<div class="field"><label>Supporting message</label><textarea data-field="subtitle" maxlength="180">'+esc(promo.subtitle)+'</textarea></div>'
+       +'<div class="editor-actions"><button class="act" data-action="preview">Preview</button><button class="act danger" data-action="delete">Remove slide</button></div></section>').join('')+'</div>'
+   +'<button class="act primary full" id="addPromo" '+((current.promos||[]).length>=8?'disabled':'')+'>+ Add a promo slide</button>'
+   +'<div class="note">No unapproved discounts or free items are advertised. You control all the promo wording.</div>';
+  $('sp-item').value=sp.itemId||'';
+  $('sp-enabled').onchange=e=>{current.dailySpecial.enabled=e.target.checked;save();render()};
+  $('sp-label').oninput=e=>{current.dailySpecial.label=e.target.value.slice(0,38);save();updateDailySpecial()};
+  $('sp-item').onchange=e=>{current.dailySpecial.itemId=e.target.value;save();updateDailySpecial()};
+  $('pr-enabled').onchange=e=>{current.promoEnabled=e.target.checked;save();render()};
+  editorContent.querySelectorAll('[data-promo]').forEach(section=>{
+   const i=Number(section.dataset.promo),slide=current.promos[i];
+   section.querySelector('[data-field="itemId"]').value=slide.itemId||'';
+   section.querySelectorAll('[data-field]').forEach(input=>{
+    const fld=input.dataset.field;
+    input.addEventListener(fld==='enabled'||fld==='itemId'?'change':'input',()=>{slide[fld]=fld==='enabled'?input.checked:input.value;save();render()});
+   });
+   section.querySelector('[data-action="preview"]').onclick=()=>{stopCinema();const it=current.items.find(v=>v.id===slide.itemId&&v.enabled);showScene('promo',it,slide,Math.round(current.promoDuration*1000))};
+   section.querySelector('[data-action="delete"]').onclick=()=>{if(!confirm('Remove this promo slide?'))return;current.promos.splice(i,1);save();render();showPromos()};
+  });
+  $('addPromo').onclick=()=>{if(current.promos.length>=8)return;current.promos.push({id:'promo-'+Date.now(),enabled:true,itemId:'',title:'NEW PROMO',subtitle:'Add your promotional message here'});save();render();showPromos()};
+ }
+ function showPublish(){editorContent.innerHTML='<div class="section-label">Take your menu live</div>'
+  +'<div class="note"><strong>Separate-image version:</strong> photos stay inside the <code>images/</code> folder, preserving their original quality. Updating text only requires replacing index.html. Updating photos also requires uploading the replacement image files.</div>'
+  +'<button class="act primary full" id="downloadPackage" style="font-size:17px;padding:16px">⬇ Download Site ZIP (HTML + available photos)</button>'
+  +'<button class="act full" id="downloadHTML" style="margin-top:9px">⬇ Download index.html only</button>'
+  +'<div class="note">On GitHub Pages: extract the ZIP and upload index.html plus the supplied files inside images/. Keep all previous images/ files that are not included in the ZIP. In a locally opened HTML file, the ZIP may only include newly chosen photos because browsers block reading existing local files; your initial website package contains all eight originals.</div>'
+  +'<div class="edit-separator"></div><div class="section-label">Backup & transfer</div>'
+  +'<div class="editor-actions"><button class="act" id="exportJSON">⬇ Save JSON backup</button><button class="act" id="importJSON">⬆ Import JSON backup</button></div>'
+  +'<div class="edit-separator"></div><div class="section-label">Reset</div><button class="act danger" id="resetMenu">Restore original menu</button>'
+  +'<div class="note"><strong>Important:</strong> Edits are saved only in this browser until you publish updated site files. There is no live remote synchronization or shared online account in this version.</div>';
+  $('downloadPackage').onclick=publishPackage;$('downloadHTML').onclick=publishHTML;$('exportJSON').onclick=exportJSON;$('importJSON').onclick=()=>$('fileImport').click();
+  $('resetMenu').onclick=()=>{if(!confirm('Restore the original 8-item menu? This replaces your current edits.'))return;current=clone(STARTUP_CONFIG);save();render();switchTab('items');toast('Original menu restored.')};
+ }
+ function renderEditor(){document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('selected',b.dataset.tab===activeTab));
+  if(activeTab==='items')showItems();else if(activeTab==='brand')showBrand();else if(activeTab==='effects')showEffects();else if(activeTab==='promos')showPromos();else showPublish();
+ }
+ function switchTab(tab){activeTab=tab;renderEditor()}
+ function toggleEditor(force){let open=typeof force==='boolean'?force:!app.classList.contains('editing');if(open && document.fullscreenElement)document.exitFullscreen?.().catch(()=>{});app.classList.toggle('editing',open);if(open){stopCinema();renderEditor()}else startCinema();requestAnimationFrame(fit)}
+ function fullscreen(){const target=$('display');if(document.fullscreenElement)document.exitFullscreen?.();else target.requestFullscreen?.().catch(()=>toast('Use your browser’s F11 key for fullscreen.'))}
+ function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
+ function exportJSON(){downloadBlob(new Blob([JSON.stringify(current,null,2)],{type:'application/json'}),'Papis_Menu_Backup.json');toast('Menu JSON downloaded.')}
+ function htmlForPublish(){
+  const output=clone(current);output.buildId='published-'+Date.now();
+  const dom=document.documentElement.cloneNode(true);
+  dom.querySelector('#startupData').textContent=JSON.stringify(output).replace(/</g,'\\u003c');
+  dom.querySelector('#app').classList.remove('editing');dom.querySelector('#toast').classList.remove('show');dom.querySelector('#toast').textContent='';
+  return '<!doctype html>\n'+dom.outerHTML;
+ }
+ function publishHTML(){
+  downloadBlob(new Blob([htmlForPublish()],{type:'text/html;charset=utf-8'}),'index.html');
+  toast(pendingImages.size?'index.html downloaded. Also publish your new photos from Site ZIP.':'index.html downloaded. Upload it to replace the old website file.');
+ }
+ // Standalone ZIP writer using the ZIP store method (no external scripts or accounts needed).
+ const enc = new TextEncoder();
+ function zipCRC(bytes){
+  let c=0xffffffff; for(const b of bytes){c^=b;for(let j=0;j<8;j++)c=(c>>>1)^((c&1)?0xedb88320:0)}return(c^0xffffffff)>>>0;
+ }
+ function createZip(files){
+  const body=[],directory=[];let offset=0;
+  const u16=(d,i,n)=>d.setUint16(i,n,true),u32=(d,i,n)=>d.setUint32(i,n>>>0,true);
+  for(const [name,bytes] of files){
+   const fname=enc.encode(name),crc=zipCRC(bytes),sz=bytes.byteLength;
+   const loc=new Uint8Array(30+fname.length),l=new DataView(loc.buffer);
+   u32(l,0,0x04034b50);u16(l,4,20);u16(l,6,0x0800);u16(l,8,0);u32(l,14,crc);u32(l,18,sz);u32(l,22,sz);u16(l,26,fname.length);loc.set(fname,30);
+   body.push(loc,bytes);
+   const cen=new Uint8Array(46+fname.length),d=new DataView(cen.buffer);
+   u32(d,0,0x02014b50);u16(d,4,20);u16(d,6,20);u16(d,8,0x0800);u16(d,10,0);u32(d,16,crc);u32(d,20,sz);u32(d,24,sz);u16(d,28,fname.length);u32(d,42,offset);cen.set(fname,46);directory.push(cen);
+   offset+=loc.byteLength+sz;
+  }
+  const centralSize=directory.reduce((n,x)=>n+x.byteLength,0);
+  const ending=new Uint8Array(22),v=new DataView(ending.buffer);
+  u32(v,0,0x06054b50);u16(v,8,files.length);u16(v,10,files.length);u32(v,12,centralSize);u32(v,16,offset);
+  return new Blob([...body,...directory,ending],{type:'application/zip'});
+ }
+ async function publishPackage(){
+  const files=[['index.html',enc.encode(htmlForPublish())]];
+  const included=[],missing=[];
+  const paths=[...new Set(current.items.map(it=>it.image).filter(Boolean))];
+  for(const path of paths){
+   if(pendingImages.has(path)){
+    files.push([path,new Uint8Array(await pendingImages.get(path).arrayBuffer())]);included.push(path);continue;
+   }
+   // Same-origin hosted images are readable; file:/// images generally aren't due to browser security.
+   try{if(location.protocol==='file:')throw Error('Local file restrictions');
+    const response=await fetch(path,{cache:'no-store'});if(!response.ok)throw Error('Missing');
+    files.push([path,new Uint8Array(await response.arrayBuffer())]);included.push(path);
+   }catch(e){missing.push(path)}
+  }
+  const txt='PAPI\'S HOT CHICKEN - GITHUB PAGES\n\nUpload index.html at your repository root.\nUpload the image files inside images/ (preserve folder names).\n\n'+
+   'Included images ('+included.length+'):\n'+(included.join('\n')||'None')+'\n\n'+
+   'Not included ('+missing.length+'): these must already exist in your images/ folder or be copied from the original initial package:\n'+(missing.join('\n')||'None')+'\n\n'+
+   'A local browser cannot always read files from the filesystem. For a complete initial website installation use the all-images package supplied with this version.\n';
+  files.push(['README.txt',enc.encode(txt)]);
+  downloadBlob(createZip(files),'Papis_Hot_Chicken_Site_Update.zip');
+  toast(missing.length?'ZIP exported. '+missing.length+' existing photos must remain on your site.':'Site ZIP downloaded with all '+included.length+' referenced photos.');
+ }
+ $('fileImport').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;try{const text=await f.text();current=sanitize(JSON.parse(text));current.buildId=STARTUP_CONFIG.buildId;selectedId=current.items[0]?.id||null;save();render();switchTab('items');toast('Menu backup imported.')}catch(err){toast('Import failed: '+err.message)}e.target.value=''};
+ $('toggleEditor').onclick=()=>toggleEditor();$('closeEditor').onclick=()=>toggleEditor(false);$('publishShortcut').onclick=publishPackage;$('toggleFullscreen').onclick=fullscreen();
+ $('tabs').addEventListener('click',e=>{let b=e.target.closest('[data-tab]');if(b)switchTab(b.dataset.tab)});
+ window.addEventListener('keydown',e=>{if(e.target.matches('input,textarea,select'))return;if(e.key==='e'||e.key==='E'){toggleEditor();e.preventDefault()}if(e.key==='f'||e.key==='F'){fullscreen();e.preventDefault()}if(e.key==='Escape'&&app.classList.contains('editing'))toggleEditor(false)});
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopCinema();else startCinema()});
+ window.addEventListener('storage',e=>{if(e.key===STORAGE_KEY){let was=current;try{let next=sanitize(JSON.parse(e.newValue));if(next.buildId===STARTUP_CONFIG.buildId){current=next;render();if(app.classList.contains('editing'))renderEditor()}}catch(err){current=was}}});
+ load();render();requestAnimationFrame(fit);
+ if(window.location.hash==='#edit'||new URLSearchParams(location.search).has('edit'))toggleEditor(true);
+})();
+</script>
+</body>
+</html>
