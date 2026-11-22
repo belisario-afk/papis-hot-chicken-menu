@@ -154,7 +154,7 @@ button,input,textarea,select{font:inherit} button{cursor:pointer} button:disable
 </style>
 </head>
 <body>
-<script type="application/json" id="startupData">{"buildId":"papis-v4-cinema-daily-2026-11-21","featureSpotlight":true,"featureChicken":true,"brand":"Papi's","subtitle":"Hot Chicken","ticker":"TENDERS  •  CHICKEN SANDWICHES  •  LOADED FRIES  •  MAC & CHEESE  •  PAPI’S HOT CHICKEN","accent":"#f53225","motion":"normal","items":[{"id":"papis-1","number":"1","name":"Combo #1","desc":"2 tenders, fries, Texas toast, sauce","price":"13.49","tag":"","image":"images/01_Combo_1.png","enabled":true},{"id":"papis-2","number":"2","name":"Combo #2","desc":"1 sandwich, 1 tender, fries, sauce (sandwich has coleslaw & pickles)","price":"14.49","tag":"","image":"images/02_Combo_2.png","enabled":true},{"id":"papis-3","number":"3","name":"Papi's Special","desc":"4 tenders, fries, Texas toast, sauce","price":"16.49","tag":"","image":"images/03_Papis_Special.png","enabled":true},{"id":"papis-4","number":"4","name":"Loaded Fries","desc":"Fries, mac & cheese, chicken, sauce","price":"15.99","tag":"","image":"images/04_Loaded_Fries.png","enabled":true},{"id":"papis-5","number":"5","name":"Loaded Burrito","desc":"Flour tortilla, fries, mac & cheese, chicken, sauce","price":"13.49","tag":"","image":"images/05_Loaded_Burrito.png","enabled":true},{"id":"papis-6","number":"6","name":"Papi's Bowl","desc":"Mac and cheese bowl topped with chicken, pickles, and sauce","price":"13.49","tag":"","image":"images/06_Papis_Bowl.png","enabled":true},{"id":"papis-7","number":"7","name":"Mac & Cheese Lovers","desc":"","price":"14.99","tag":"","image":"images/07_Mac_Cheese_Lovers.png","enabled":true},{"id":"papis-8","number":"8","name":"Munchie Box","desc":"Loaded fries, coleslaw & a tender","price":"13.99","tag":"","image":"images/08_Munchie_Box.png","enabled":true}],"spotlightDuration":3.6,"promoEnabled":true,"promoEvery":2,"promoDuration":4.5,"dailySpecial":{"enabled":false,"label":"TODAY'S SPECIAL","itemId":"papis-3","note":""},"promos":[{"id":"promo-1","enabled":true,"itemId":"papis-3","title":"PAPI'S SPECIAL","subtitle":"4 tenders • fries • Texas toast • sauce"},{"id":"promo-2","enabled":true,"itemId":"papis-4","title":"LOADED FRIES","subtitle":"Fries • mac & cheese • chicken • sauce"}]}</script>
+<script type="application/json" id="startupData">{"buildId":"papis-v4-cinema-daily-2026-11-21","featureSpotlight":true,"featureChicken":true,"brand":"Papi's","subtitle":"Hot Chicken","ticker":"TENDERS  •  CHICKEN SANDWICHES  •  LOADED FRIES  •  MAC & CHEESE  •  PAPI’S HOT CHICKEN","accent":"#f53225","motion":"normal","items":[{"id":"papis-1","number":"1","name":"Combo #1","desc":"2 tenders, fries, Texas toast, sauce","price":"13.49","tag":"","image":"01_Combo_1.png","enabled":true},{"id":"papis-2","number":"2","name":"Combo #2","desc":"1 sandwich, 1 tender, fries, sauce (sandwich has coleslaw & pickles)","price":"14.49","tag":"","image":"02_Combo_2.png","enabled":true},{"id":"papis-3","number":"3","name":"Papi's Special","desc":"4 tenders, fries, Texas toast, sauce","price":"16.49","tag":"","image":"03_Papis_Special.png","enabled":true},{"id":"papis-4","number":"4","name":"Loaded Fries","desc":"Fries, mac & cheese, chicken, sauce","price":"15.99","tag":"","image":"04_Loaded_Fries.png","enabled":true},{"id":"papis-5","number":"5","name":"Loaded Burrito","desc":"Flour tortilla, fries, mac & cheese, chicken, sauce","price":"13.49","tag":"","image":"05_Loaded_Burrito.png","enabled":true},{"id":"papis-6","number":"6","name":"Papi's Bowl","desc":"Mac and cheese bowl topped with chicken, pickles, and sauce","price":"13.49","tag":"","image":"06_Papis_Bowl.png","enabled":true},{"id":"papis-7","number":"7","name":"Mac & Cheese Lovers","desc":"","price":"14.99","tag":"","image":"07_Mac_Cheese_Lovers.png","enabled":true},{"id":"papis-8","number":"8","name":"Munchie Box","desc":"Loaded fries, coleslaw & a tender","price":"13.99","tag":"","image":"08_Munchie_Box.png","enabled":true}],"spotlightDuration":3.6,"promoEnabled":true,"promoEvery":2,"promoDuration":4.5,"dailySpecial":{"enabled":false,"label":"TODAY'S SPECIAL","itemId":"papis-3","note":""},"promos":[{"id":"promo-1","enabled":true,"itemId":"papis-3","title":"PAPI'S SPECIAL","subtitle":"4 tenders • fries • Texas toast • sauce"},{"id":"promo-2","enabled":true,"itemId":"papis-4","title":"LOADED FRIES","subtitle":"Fries • mac & cheese • chicken • sauce"}]}</script>
 <div id="app">
 <aside id="editor" aria-label="Menu editor">
  <header class="editor-top">
@@ -208,16 +208,19 @@ button,input,textarea,select{font:inherit} button{cursor:pointer} button:disable
  let tempSaveSucceeded=true;
  const pendingImages=new Map(); // images chosen in editor but not yet uploaded to GitHub
  const previewURLs=new Map();
- const imagePreview = path => previewURLs.get(path) || path || '';
+ const imagePreview = path => previewURLs.get(path) || cleanImagePath(path) || '';
  function cleanImagePath(s){
-  const raw=String(s||'').trim();
-  return /^images\/[A-Za-z0-9._-]+\.(png|jpe?g|webp|avif|gif)$/i.test(raw)?raw:'';
+  // This GitHub repository keeps its PNG files beside index.html, not in /images/.
+  // Accept older images/name.png values from backups and migrate them automatically.
+  const raw=String(s||'').trim().replace(/^\.\//,'');
+  const flat=raw.replace(/^images\//i,'');
+  return /^[A-Za-z0-9._-]+\.(png|jpe?g|webp|avif|gif)$/i.test(flat)?flat:'';
  }
  function imageFileName(it,f){
   const ext=(f.name.match(/\.(png|jpe?g|webp|avif|gif)$/i)||[])[1]?.toLowerCase();
   if(!ext)throw Error('Use PNG, JPG, WebP, AVIF, or GIF.');
   const part=(it.name||'menu-item').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,44)||'food';
-  return 'images/'+String(it.number||'').replace(/[^0-9]/g,'').padStart(2,'0').slice(0,4)+'_'+part+'.'+ext;
+  return String(it.number||'').replace(/[^0-9]/g,'').padStart(2,'0').slice(0,4)+'_'+part+'.'+ext;
  }
 
  const $ = id => document.getElementById(id);
@@ -391,14 +394,14 @@ button,input,textarea,select{font:inherit} button{cursor:pointer} button:disable
    +makeField('Description','f-desc',it.desc,'textarea','Keep descriptions short enough to read from across the restaurant.')
    +makeField('Optional label','f-tag',it.tag,'text','Example: NEW or LIMITED; leave blank for no label.')
    +'<div class="toggle-row"><span><strong>Show on TV menu</strong><small>Hide an item without deleting it</small></span><input type="checkbox" id="f-enabled" '+(it.enabled?'checked':'')+'></div>'
-   +'<div class="field"><label>Image file path</label><input id="f-imgpath" value="'+esc(it.image)+'" placeholder="images/01_Combo_1.png"><small>Use an image inside the /images folder. The file must exist on your site.</small></div>'
+   +'<div class="field"><label>Image file path</label><input id="f-imgpath" value="'+esc(it.image)+'" placeholder="01_Combo_1.png"><small>Use a PNG file beside index.html (example: 01_Combo_1.png). The filename must match exactly.</small></div>'
    +'<div class="field"><label>Replace food photo</label><div class="upload-box">'+(it.image?'<img src="'+esc(imagePreview(it.image))+'" alt="Current food photo">':'<div style="font-size:75px;margin-bottom:10px">🍗</div>')
    +'<input id="f-image" type="file" accept="image/png,image/jpeg,image/webp,image/avif,image/gif" aria-label="Upload food image"><small style="margin-top:9px">Choose a photo at its ORIGINAL resolution. It stays a separate image file; use Publish Site ZIP to upload it along with your menu.</small>'+(pendingImages.has(it.image)?'<small style="color:#ffc266">✓ New image staged for export</small>':'')+'</div></div>'
    +'<div class="editor-actions"><button class="act" id="moveUp">↑ Move up</button><button class="act" id="moveDown">↓ Move down</button><button class="act danger" id="deleteItem">Delete</button></div>';
   const update=(prop,val)=>{it[prop]=val;save();render();renderList()};
   for(let prop of ['number','name','desc','price','tag'])$('f-'+prop).addEventListener('input',e=>update(prop,e.target.value));
   $('f-enabled').addEventListener('change',e=>update('enabled',e.target.checked));
-  $('f-imgpath').addEventListener('change',e=>{const path=cleanImagePath(e.target.value);if(e.target.value.trim()&&!path){toast('Use a path such as images/my_photo.png');e.target.value=it.image;return}it.image=path;save();render();renderList();showItemForm()});
+  $('f-imgpath').addEventListener('change',e=>{const path=cleanImagePath(e.target.value);if(e.target.value.trim()&&!path){toast('Use a filename such as my_photo.png');e.target.value=it.image;return}it.image=path;save();render();renderList();showItemForm()});
   $('f-image').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{
     if(f.size>30*1024*1024)throw Error('Select an image under 30 MB.');
     const path=imageFileName(it,f);
@@ -484,10 +487,10 @@ button,input,textarea,select{font:inherit} button{cursor:pointer} button:disable
   $('addPromo').onclick=()=>{if(current.promos.length>=8)return;current.promos.push({id:'promo-'+Date.now(),enabled:true,itemId:'',title:'NEW PROMO',subtitle:'Add your promotional message here'});save();render();showPromos()};
  }
  function showPublish(){editorContent.innerHTML='<div class="section-label">Take your menu live</div>'
-  +'<div class="note"><strong>Separate-image version:</strong> photos stay inside the <code>images/</code> folder, preserving their original quality. Updating text only requires replacing index.html. Updating photos also requires uploading the replacement image files.</div>'
+  +'<div class="note"><strong>Separate-image version:</strong> photos stay as separate files beside <code>index.html</code>, preserving their original quality. Updating text only requires replacing index.html. Updating photos also requires uploading the replacement image files.</div>'
   +'<button class="act primary full" id="downloadPackage" style="font-size:17px;padding:16px">⬇ Download Site ZIP (HTML + available photos)</button>'
   +'<button class="act full" id="downloadHTML" style="margin-top:9px">⬇ Download index.html only</button>'
-  +'<div class="note">On GitHub Pages: extract the ZIP and upload index.html plus the supplied files inside images/. Keep all previous images/ files that are not included in the ZIP. In a locally opened HTML file, the ZIP may only include newly chosen photos because browsers block reading existing local files; your initial website package contains all eight originals.</div>'
+  +'<div class="note">On GitHub Pages: extract the ZIP and upload index.html and all PNG files together at the repository root. Keep any previously uploaded PNGs not included in the ZIP. In a locally opened HTML file, the ZIP may only include newly chosen photos because browsers block reading existing local files; your initial website package contains all eight originals.</div>'
   +'<div class="edit-separator"></div><div class="section-label">Backup & transfer</div>'
   +'<div class="editor-actions"><button class="act" id="exportJSON">⬇ Save JSON backup</button><button class="act" id="importJSON">⬆ Import JSON backup</button></div>'
   +'<div class="edit-separator"></div><div class="section-label">Reset</div><button class="act danger" id="resetMenu">Restore original menu</button>'
@@ -550,9 +553,9 @@ button,input,textarea,select{font:inherit} button{cursor:pointer} button:disable
     files.push([path,new Uint8Array(await response.arrayBuffer())]);included.push(path);
    }catch(e){missing.push(path)}
   }
-  const txt='PAPI\'S HOT CHICKEN - GITHUB PAGES\n\nUpload index.html at your repository root.\nUpload the image files inside images/ (preserve folder names).\n\n'+
+  const txt='PAPI\'S HOT CHICKEN - GITHUB PAGES\n\nUpload index.html at your repository root.\nUpload the image files beside index.html at the repository root.\n\n'+
    'Included images ('+included.length+'):\n'+(included.join('\n')||'None')+'\n\n'+
-   'Not included ('+missing.length+'): these must already exist in your images/ folder or be copied from the original initial package:\n'+(missing.join('\n')||'None')+'\n\n'+
+   'Not included ('+missing.length+'): these must already exist at your repo root or be copied from the original initial package:\n'+(missing.join('\n')||'None')+'\n\n'+
    'A local browser cannot always read files from the filesystem. For a complete initial website installation use the all-images package supplied with this version.\n';
   files.push(['README.txt',enc.encode(txt)]);
   downloadBlob(createZip(files),'Papis_Hot_Chicken_Site_Update.zip');
