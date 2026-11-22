@@ -66,6 +66,24 @@ button,input,textarea,select{font:inherit} button{cursor:pointer} button:disable
 #stage.no-motion *,#stage.no-motion *:before,#stage.no-motion *:after{animation:none!important;transition:none!important}
 #stage.no-motion .ticker-track{transform:none}
 @media(prefers-reduced-motion:reduce){#stage:not(.force-motion) *,#stage:not(.force-motion) *:before,#stage:not(.force-motion) *:after{animation-duration:0.001s!important;transition:none!important}}
+
+/* Papi's official animated flex logo replaces the old drawn rooster and type. */
+.board-header{height:250px;padding:0 72px 0;isolation:isolate}
+.menu-grid{top:268px}
+.brand-block.brand-logo-shell{width:100%;height:100%;gap:56px;filter:none;position:relative;justify-content:center;align-items:center}
+.brand-animated{display:block;height:245px;width:auto;max-width:280px;object-fit:contain;flex:0 0 auto;filter:drop-shadow(0 8px 18px rgba(0,0,0,.68)) drop-shadow(0 0 22px rgba(255,75,27,.28));position:relative;z-index:2}
+.brand-wing{display:flex;flex:1;flex-direction:column;gap:9px;min-width:0;position:relative;z-index:1}
+.wing-left{text-align:right;align-items:flex-end}.wing-right{text-align:left;align-items:flex-start}
+.wing-overline{color:#ffb880;font-size:15px;font-weight:900;letter-spacing:5px;text-transform:uppercase;text-shadow:0 1px 8px #000}
+.wing-title{font:italic 900 47px/1 Impact,'Arial Black',sans-serif;color:#fff1dc;letter-spacing:1px;white-space:nowrap;text-shadow:3px 4px 0 #260a07,0 0 22px #000}
+.wing-title em{font-style:inherit;color:#fa5135}
+.wing-underline{width:85%;height:3px;background:linear-gradient(90deg,transparent,#ffb778 45%,#ff402a);box-shadow:0 0 14px rgba(255,90,43,.45)}
+.wing-right .wing-underline{background:linear-gradient(90deg,#ff402a,#ffb778 55%,transparent)}
+.wing-bottom{font-size:17px;color:#e4bba6;letter-spacing:2.4px;font-weight:900;white-space:nowrap}
+.board-header .header-line{bottom:0}
+.side-hatch{top:85px;opacity:.14}
+#stage.no-motion .brand-animated{filter:drop-shadow(0 6px 12px #000b)}
+
 /* EDITOR */
 #editor{display:none;width:510px;flex:0 0 510px;height:100vh;background:#161211;border-right:1px solid #63302a;box-shadow:15px 0 55px #0009;z-index:20;overflow:hidden;flex-direction:column}
 #app.editing #editor{display:flex}
@@ -170,18 +188,10 @@ button,input,textarea,select{font:inherit} button{cursor:pointer} button:disable
   <div class="fire-glow"></div><div class="top-edge"></div>
   <header class="board-header">
    <span class="side-hatch left"></span><span class="side-hatch right"></span>
-   <div class="brand-block">
-    <svg class="mascot" viewBox="0 0 180 185" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path d="M60 53 Q26 22 49 14 Q63 12 72 34 Q66 -5 95 6 Q111 17 99 41 Q116 5 136 27 Q143 44 118 58" fill="#e5331d" stroke="#170806" stroke-width="8" stroke-linejoin="round"/>
-      <path d="M43 71 Q53 45 91 42 Q134 40 147 73 L153 115 Q143 155 101 167 L54 153 Q22 134 28 96 Z" fill="#fff0db" stroke="#180b08" stroke-width="9"/>
-      <path d="M28 113 L9 95 L28 87 L14 73 L45 80" fill="#e8d0b3" stroke="#170909" stroke-width="7"/>
-      <path d="M105 111 Q151 107 161 91 L178 104 L151 119 L117 122" fill="#f3a52c" stroke="#200c07" stroke-width="8" stroke-linejoin="round"/>
-      <path d="M88 113 Q94 137 108 141 Q126 134 126 117" fill="#e9351d" stroke="#180807" stroke-width="8"/>
-      <path d="M52 78 L109 78 Q124 75 137 70 L133 91 Q117 104 102 101 L88 95 L57 102 Q49 95 52 78" fill="#0d0d10" stroke="#0a0504" stroke-width="7"/>
-      <path d="M58 82 L80 82 M104 82 L122 79" stroke="#7799a5" stroke-width="4" stroke-linecap="round"/>
-      <path d="M45 151 L91 167 L118 150 Q101 183 73 179 Q44 174 25 159 Z" fill="#df291c" stroke="#180805" stroke-width="8"/>
-    </svg>
-    <div class="brand-words"><div class="main-brand" id="brandTitle"></div><div class="sub-brand"><span id="brandSubtitle"></span><i class="flame-icon" aria-hidden="true">♨</i></div></div>
+   <div class="brand-block brand-logo-shell">
+    <div class="brand-wing wing-left" aria-hidden="true"><div class="wing-overline">THE HEAT IS ON</div><div class="wing-title">CRISPY <em>CHICKEN</em></div><div class="wing-underline"></div><div class="wing-bottom">TENDERS  •  SANDWICHES</div></div>
+    <img class="brand-animated" id="brandAnimatedLogo" src="Papis_Animated_Flex.gif" alt="Papi’s Hot Chicken — muscular rooster flexing both biceps" width="226" height="246" decoding="async">
+    <div class="brand-wing wing-right" aria-hidden="true"><div class="wing-overline">BRING THE FLAVOR</div><div class="wing-title">HOT <em>&amp; LOADED</em></div><div class="wing-underline"></div><div class="wing-bottom">FRIES  •  MAC &amp; CHEESE</div></div>
    </div><div class="header-line"></div>
   </header>
   <div class="menu-grid" id="menuGrid"></div>
@@ -263,7 +273,8 @@ button,input,textarea,select{font:inherit} button{cursor:pointer} button:disable
  function formatBrand(s){return String(s||'Papi’s').toUpperCase()}
  function render(){
   document.documentElement.style.setProperty('--accent',safeColor(current.accent));
-  $('brandTitle').textContent=formatBrand(current.brand);$('brandSubtitle').textContent=formatBrand(current.subtitle);
+  const logo=$('brandAnimatedLogo'), logoPath=current.motion==='off'?'Papis_Logo_Still.png':'Papis_Animated_Flex.gif';
+  if(logo && logo.getAttribute('src')!==logoPath)logo.setAttribute('src',logoPath);
   $('footerBrand').textContent=formatBrand(current.brand);
   const news=(current.ticker||'PICK YOUR FAVORITE • TENDERS • SANDWICHES • LOADED FRIES').toUpperCase();
   $('tickerTrack').innerHTML='<span class="ticker-copy">'+esc(news)+'</span><span class="ticker-copy">'+esc(news)+'</span><span class="ticker-copy">'+esc(news)+'</span><span class="ticker-copy">'+esc(news)+'</span>';
@@ -422,12 +433,13 @@ button,input,textarea,select{font:inherit} button{cursor:pointer} button:disable
  function fileToDataURL(f){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(Error('Could not read the file.'));r.readAsDataURL(f)})}
  function loadImage(src){return new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(Error('Unsupported or damaged image.'));i.src=src})}
  function showBrand(){editorContent.innerHTML='<div class="section-label">Restaurant branding</div>'
-  +makeField('Restaurant name','b-brand',current.brand,'text','Appears as the large menu heading.')
-  +makeField('Subtitle','b-subtitle',current.subtitle)
+  +'<div class="note"><strong>Official animated logo installed.</strong> The TV header now uses <code>Papis_Animated_Flex.gif</code> (double-biceps flex), and switches to a still logo when Motion is off. Replace those files to change the artwork.</div>'
+  +'<div class="upload-box"><img src="Papis_Animated_Flex.gif" style="height:170px" alt="Papi’s animated chicken logo preview"></div>'
+  +makeField('Footer brand name','b-brand',current.brand,'text','Used in the bottom ticker badge. The logo artwork already contains the restaurant name.')
   +makeField('Bottom moving message','b-ticker',current.ticker,'textarea','Use • to separate phrases. Text scrolls across the TV menu.')
   +'<div class="field"><label for="b-accent">Brand color</label><input type="color" id="b-accent" value="'+esc(safeColor(current.accent))+'" style="height:52px;cursor:pointer"></div>'
   +'<div class="note">Menu is designed for 1920 × 1080 landscape TVs. Featured items and promo slides temporarily take over the screen, then the full menu returns.</div>';
-  for(const field of ['brand','subtitle','ticker','accent'])$('b-'+field).addEventListener('input',e=>{current[field]=e.target.value;save();render()});
+  for(const field of ['brand','ticker','accent'])$('b-'+field).addEventListener('input',e=>{current[field]=e.target.value;save();render()});
  }
  function showEffects(){editorContent.innerHTML='<div class="section-label">Motion & cinema settings</div>'
   +'<div class="field"><label for="motionInput">Animation style</label><select id="motionInput"><option value="normal">Cinematic — full motion</option><option value="low">Gentle — slower transitions</option><option value="off">Still — no effects</option></select></div>'
@@ -487,10 +499,10 @@ button,input,textarea,select{font:inherit} button{cursor:pointer} button:disable
   $('addPromo').onclick=()=>{if(current.promos.length>=8)return;current.promos.push({id:'promo-'+Date.now(),enabled:true,itemId:'',title:'NEW PROMO',subtitle:'Add your promotional message here'});save();render();showPromos()};
  }
  function showPublish(){editorContent.innerHTML='<div class="section-label">Take your menu live</div>'
-  +'<div class="note"><strong>Separate-image version:</strong> photos stay as separate files beside <code>index.html</code>, preserving their original quality. Updating text only requires replacing index.html. Updating photos also requires uploading the replacement image files.</div>'
+  +'<div class="note"><strong>Brand logo files:</strong> Keep <code>Papis_Animated_Flex.gif</code> and <code>Papis_Logo_Still.png</code> alongside <code>index.html</code>. All food PNGs must also be beside index.html. Text changes only require updating the HTML once assets are on GitHub.</div>'
   +'<button class="act primary full" id="downloadPackage" style="font-size:17px;padding:16px">⬇ Download Site ZIP (HTML + available photos)</button>'
   +'<button class="act full" id="downloadHTML" style="margin-top:9px">⬇ Download index.html only</button>'
-  +'<div class="note">On GitHub Pages: extract the ZIP and upload index.html and all PNG files together at the repository root. Keep any previously uploaded PNGs not included in the ZIP. In a locally opened HTML file, the ZIP may only include newly chosen photos because browsers block reading existing local files; your initial website package contains all eight originals.</div>'
+  +'<div class="note">On GitHub Pages: extract the ZIP and upload index.html, both logo files, and all PNG files together at the repository root. Keep any previously uploaded PNGs not included in the ZIP. In a locally opened HTML file, the ZIP may only include newly chosen photos because browsers block reading existing local files; your initial website package contains all eight originals.</div>'
   +'<div class="edit-separator"></div><div class="section-label">Backup & transfer</div>'
   +'<div class="editor-actions"><button class="act" id="exportJSON">⬇ Save JSON backup</button><button class="act" id="importJSON">⬆ Import JSON backup</button></div>'
   +'<div class="edit-separator"></div><div class="section-label">Reset</div><button class="act danger" id="resetMenu">Restore original menu</button>'
@@ -515,7 +527,7 @@ button,input,textarea,select{font:inherit} button{cursor:pointer} button:disable
  }
  function publishHTML(){
   downloadBlob(new Blob([htmlForPublish()],{type:'text/html;charset=utf-8'}),'index.html');
-  toast(pendingImages.size?'index.html downloaded. Also publish your new photos from Site ZIP.':'index.html downloaded. Upload it to replace the old website file.');
+  toast(pendingImages.size?'index.html downloaded. Also publish new photos from Site ZIP.':'index.html downloaded. Upload it with the logo GIF and PNG to update your site.');
  }
  // Standalone ZIP writer using the ZIP store method (no external scripts or accounts needed).
  const enc = new TextEncoder();
@@ -542,7 +554,7 @@ button,input,textarea,select{font:inherit} button{cursor:pointer} button:disable
  async function publishPackage(){
   const files=[['index.html',enc.encode(htmlForPublish())]];
   const included=[],missing=[];
-  const paths=[...new Set(current.items.map(it=>it.image).filter(Boolean))];
+  const paths=[...new Set([...current.items.map(it=>it.image).filter(Boolean),'Papis_Animated_Flex.gif','Papis_Logo_Still.png'])];
   for(const path of paths){
    if(pendingImages.has(path)){
     files.push([path,new Uint8Array(await pendingImages.get(path).arrayBuffer())]);included.push(path);continue;
@@ -554,7 +566,7 @@ button,input,textarea,select{font:inherit} button{cursor:pointer} button:disable
    }catch(e){missing.push(path)}
   }
   const txt='PAPI\'S HOT CHICKEN - GITHUB PAGES\n\nUpload index.html at your repository root.\nUpload the image files beside index.html at the repository root.\n\n'+
-   'Included images ('+included.length+'):\n'+(included.join('\n')||'None')+'\n\n'+
+   'Included image and logo assets ('+included.length+'):\n'+(included.join('\n')||'None')+'\n\n'+
    'Not included ('+missing.length+'): these must already exist at your repo root or be copied from the original initial package:\n'+(missing.join('\n')||'None')+'\n\n'+
    'A local browser cannot always read files from the filesystem. For a complete initial website installation use the all-images package supplied with this version.\n';
   files.push(['README.txt',enc.encode(txt)]);
